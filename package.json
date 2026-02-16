@@ -1,7 +1,7 @@
 {
-  "name": "@adonisjs/inertia",
-  "description": "Official Inertia.js adapter for AdonisJS",
-  "version": "4.0.0-next.20",
+  "name": "@airie-dev/inertia-adonis",
+  "description": "Inertia.js adapter for AdonisJS (fork with additional features)",
+  "version": "4.0.0-airie.0",
   "engines": {
     "node": ">=24.0.0"
   },
@@ -132,13 +132,13 @@
     "adonisjs"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/adonisjs/inertia#readme",
+  "homepage": "https://github.com/Airie-dev/inertia-adonis#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/adonisjs/inertia.git"
+    "url": "git+https://github.com/Airie-dev/inertia-adonis.git"
   },
   "bugs": {
-    "url": "https://github.com/adonisjs/inertia/issues"
+    "url": "https://github.com/Airie-dev/inertia-adonis/issues"
   },
   "author": "Julien Ripouteau <julien@ripouteau.com>",
   "contributors": [
