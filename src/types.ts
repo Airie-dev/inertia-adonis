@@ -399,6 +399,11 @@ export type PageObject<Props> = {
   url: string
 
   /**
+   * Optional flash data for one-time UI state (toasts, banners, etc.).
+   */
+  flash?: Record<string, unknown>
+
+  /**
    * Grouped deferred props that can be loaded after the initial page
    * load
    */
