@@ -561,7 +561,7 @@ export class Inertia<Pages> {
       version: this.getVersion(),
       clearHistory: this.#shouldClearHistory,
       encryptHistory: this.#shouldEncryptHistory,
-      flash,
+      flash: this.getFlashed(),
       props: props as Pages[Page],
       deferredProps,
       mergeProps,
