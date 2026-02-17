@@ -13,6 +13,7 @@
 import { createHash } from 'node:crypto'
 import { type Vite } from '@adonisjs/vite'
 import type { HttpContext } from '@adonisjs/core/http'
+import type { AllowedSessionValues } from '@adonisjs/session/types'
 
 import { InertiaHeaders } from './headers.js'
 import { type ServerRenderer } from './server_renderer.js'
@@ -59,6 +60,30 @@ import { type AsyncOrSync } from '@poppinss/utils/types'
  * ```
  */
 export class Inertia<Pages> {
+  /**
+   * Retrieve the flashed data from the session.
+   *
+   * Returns all flash data that has been set for the current/next request.
+   *
+   * @returns Record of flash data, or empty object if no flash data exists
+   *
+   * @example
+   * ```js
+   * inertia.flash('success', 'Saved')
+   * const flashed = inertia.getFlashed()
+   * // Returns: { success: 'Saved' }
+   * ```
+   */
+  getFlashed(): Record<string, AllowedSessionValues> {
+    const flash = this.ctx.session?.flashMessages.get('inertia.flash_data', {})
+
+    if (!flash || typeof flash !== 'object' || Array.isArray(flash)) {
+      return {}
+    }
+
+    return flash
+  }
+
   #sharedStateProviders?: (PageProps | (() => AsyncOrSync<PageProps>))[]
   #cachedRequestInfo?: RequestInfo
 
@@ -466,6 +491,44 @@ export class Inertia<Pages> {
   }
 
   /**
+   * Flash data to be included with the current/next Inertia response.
+   *
+   * Flash data is merged under the `inertia.flash_data` session key.
+   * When no session middleware is active, this method becomes a no-op.
+   *
+   * @example
+   * ```js
+   * // Flash a single key-value pair
+   * inertia.flash('success', 'Saved successfully')
+   *
+   * // Flash multiple key-value pairs at once
+   * inertia.flash({ success: 'Saved', banner: { title: 'Done' } })
+   * ```
+   */
+  flash(key: string, data: AllowedSessionValues): this
+  flash(data: Record<string, AllowedSessionValues>): this
+  flash(
+    keyOrData: string | Record<string, AllowedSessionValues>,
+    data?: AllowedSessionValues
+  ): this {
+    if (!this.ctx.session) {
+      return this
+    }
+
+    const existingFlash = this.getFlashed()
+    let flashData: Record<string, AllowedSessionValues>
+
+    if (typeof keyOrData === 'string') {
+      flashData = { ...existingFlash, [keyOrData]: data! }
+    } else {
+      flashData = { ...existingFlash, ...keyOrData }
+    }
+
+    this.ctx.session.flashMessages.set('inertia.flash_data', flashData)
+    return this
+  }
+
+  /**
    * Build a page object with processed props and metadata
    *
    * Creates the complete page object that will be sent to the client or used for SSR.
@@ -498,6 +561,7 @@ export class Inertia<Pages> {
       version: this.getVersion(),
       clearHistory: this.#shouldClearHistory,
       encryptHistory: this.#shouldEncryptHistory,
+      flash,
       props: props as Pages[Page],
       deferredProps,
       mergeProps,

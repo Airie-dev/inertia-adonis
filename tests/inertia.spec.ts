@@ -11,6 +11,7 @@ import { join } from 'node:path'
 import { test } from '@japa/runner'
 import { Vite } from '@adonisjs/vite'
 import { HttpContext } from '@adonisjs/core/http'
+import { SessionMiddlewareFactory } from '@adonisjs/session/factories'
 import { HttpContextFactory, RequestFactory } from '@adonisjs/core/factories/http'
 
 import { InertiaHeaders } from '../src/headers.ts'
@@ -43,6 +44,7 @@ test.group('Inertia', () => {
         "deepMergeProps": [],
         "deferredProps": {},
         "encryptHistory": false,
+        "flash": {},
         "mergeProps": [],
         "onceProps": {},
         "props": {},
@@ -67,6 +69,7 @@ test.group('Inertia', () => {
       url: '',
       clearHistory: false,
       encryptHistory: false,
+      flash: {},
       deferredProps: {},
       mergeProps: [],
       deepMergeProps: [],
@@ -101,6 +104,7 @@ test.group('Inertia', () => {
       url: '',
       encryptHistory: false,
       clearHistory: false,
+      flash: {},
       deferredProps: {},
       mergeProps: [],
       deepMergeProps: [],
@@ -112,6 +116,98 @@ test.group('Inertia', () => {
     const inertia = new InertiaFactory().create()
     const result: any = await inertia.render('Pages/Login', { foo: 'bar' })
     assert.deepEqual(result.component, 'Pages/Login')
+  })
+
+  test('include flash data from session in page object', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+    await sessionMiddleware.handle(ctx, () => {})
+    ctx.session.flashMessages.set('inertia.flash_data', { success: 'Saved' })
+
+    const inertia = new InertiaFactory().merge({ ctx }).create()
+    const result: any = await inertia.render('foo', {})
+
+    assert.deepEqual(result.flash, { success: 'Saved' })
+  })
+
+  test('set flash data using inertia.flash(key, value)', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+    await sessionMiddleware.handle(ctx, () => {})
+
+    const inertia = new InertiaFactory().merge({ ctx }).create()
+    const result: any = await inertia.flash('success', 'Saved').render('foo', {})
+
+    assert.deepEqual(result.flash, { success: 'Saved' })
+  })
+
+  test('flash multiple key-value pairs using object form', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+    await sessionMiddleware.handle(ctx, () => {})
+
+    const inertia = new InertiaFactory().merge({ ctx }).create()
+    const result: any = await inertia
+      .flash({ success: 'Saved', banner: { title: 'Done' }, count: 42 })
+      .render('foo', {})
+
+    assert.deepEqual(result.flash, {
+      success: 'Saved',
+      banner: { title: 'Done' },
+      count: 42,
+    })
+  })
+
+  test('merge flash data using chained calls', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+    await sessionMiddleware.handle(ctx, () => {})
+
+    const inertia = new InertiaFactory().merge({ ctx }).create()
+    const result: any = await inertia
+      .flash('success', 'Saved')
+      .flash({ banner: { title: 'Done' }, count: 42 })
+      .render('foo', {})
+
+    assert.deepEqual(result.flash, {
+      success: 'Saved',
+      banner: { title: 'Done' },
+      count: 42,
+    })
+  })
+
+  test('flash is no-op when session is not available', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const inertia = new InertiaFactory().merge({ ctx }).create()
+    const result: any = await inertia.flash('success', 'Saved').render('foo', {})
+
+    assert.deepEqual(result.flash, {})
+  })
+
+  test('getFlashed returns all flash data', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+    await sessionMiddleware.handle(ctx, () => {})
+
+    const inertia = new InertiaFactory().merge({ ctx }).create()
+    inertia.flash('success', 'Saved').flash('banner', { title: 'Done' })
+
+    const flashed = inertia.getFlashed()
+    assert.deepEqual(flashed, {
+      success: 'Saved',
+      banner: { title: 'Done' },
+    })
+  })
+
+  test('getFlashed returns empty object when no flash data exists', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+    await sessionMiddleware.handle(ctx, () => {})
+
+    const inertia = new InertiaFactory().merge({ ctx }).create()
+    const flashed = inertia.getFlashed()
+
+    assert.deepEqual(flashed, {})
   })
 
   test('return sharedData in page object', async ({ assert }) => {
