@@ -17,6 +17,7 @@ import {
 
 import {
   type DeferProp,
+  type OnceProp,
   type AlwaysProp,
   type OptionalProp,
   type MergeableProp,
@@ -965,4 +966,204 @@ test.group('To component props | Always', () => {
         | undefined
     }>()
   }).skip(true, 'Have to check if Inertia supports this')
+})
+
+test.group('To component props | Once with Transformers', () => {
+  test('convert once page props using transformers to component props', ({ expectTypeOf }) => {
+    class PostsTransformer extends BaseTransformer<any> {
+      toObject() {
+        return {
+          id: 1,
+          title: 'Hello world',
+        }
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<any> {
+      toObject() {
+        return {
+          id: 1,
+          timestamps: true,
+        }
+      }
+    }
+
+    type Data = ToComponentProps<{
+      user: OnceProp<Item<UserTransformer, 1, 'toObject'>>
+      posts: OnceProp<Collection<PostsTransformer, 1, 'toObject'>>
+      paginated: OnceProp<Paginator<PostsTransformer, 1, 'toObject'>>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      user: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated: {
+        data: { id: number; title: string }[]
+        metadata: any
+      }
+    }>()
+  })
+
+  test('convert once page props wrapping deferred with transformers to component props', ({
+    expectTypeOf,
+  }) => {
+    class PostsTransformer extends BaseTransformer<any> {
+      toObject() {
+        return {
+          id: 1,
+          title: 'Hello world',
+        }
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<any> {
+      toObject() {
+        return {
+          id: 1,
+          timestamps: true,
+        }
+      }
+    }
+
+    type Data = ToComponentProps<{
+      user: OnceProp<DeferProp<Item<UserTransformer, 1, 'toObject'>>>
+      posts: OnceProp<DeferProp<Collection<PostsTransformer, 1, 'toObject'>>>
+      paginated: OnceProp<DeferProp<Paginator<PostsTransformer, 1, 'toObject'>>>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts?: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        metadata: any
+      }
+    }>()
+  })
+
+  test('convert once page props wrapping optional with transformers to component props', ({
+    expectTypeOf,
+  }) => {
+    class PostsTransformer extends BaseTransformer<any> {
+      toObject() {
+        return {
+          id: 1,
+          title: 'Hello world',
+        }
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<any> {
+      toObject() {
+        return {
+          id: 1,
+          timestamps: true,
+        }
+      }
+    }
+
+    type Data = ToComponentProps<{
+      user: OnceProp<OptionalProp<Item<UserTransformer, 1, 'toObject'>>>
+      posts: OnceProp<OptionalProp<Collection<PostsTransformer, 1, 'toObject'>>>
+      paginated: OnceProp<OptionalProp<Paginator<PostsTransformer, 1, 'toObject'>>>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts?: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        metadata: any
+      }
+    }>()
+  })
+
+  test('convert once page props wrapping mergeable with transformers to component props', ({
+    expectTypeOf,
+  }) => {
+    class PostsTransformer extends BaseTransformer<any> {
+      toObject() {
+        return {
+          id: 1,
+          title: 'Hello world',
+        }
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<any> {
+      toObject() {
+        return {
+          id: 1,
+          timestamps: true,
+        }
+      }
+    }
+
+    type Data = ToComponentProps<{
+      user: OnceProp<MergeableProp<Item<UserTransformer, 1, 'toObject'>>>
+      posts: OnceProp<MergeableProp<Collection<PostsTransformer, 1, 'toObject'>>>
+      paginated: OnceProp<MergeableProp<Paginator<PostsTransformer, 1, 'toObject'>>>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      user: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated: {
+        data: { id: number; title: string }[]
+        metadata: any
+      }
+    }>()
+  })
+
+  test('convert once page props wrapping mergeable deferred with transformers to component props', ({
+    expectTypeOf,
+  }) => {
+    class PostsTransformer extends BaseTransformer<any> {
+      toObject() {
+        return {
+          id: 1,
+          title: 'Hello world',
+        }
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<any> {
+      toObject() {
+        return {
+          id: 1,
+          timestamps: true,
+        }
+      }
+    }
+
+    type Data = ToComponentProps<{
+      user: OnceProp<MergeableProp<DeferProp<Item<UserTransformer, 1, 'toObject'>>>>
+      posts: OnceProp<MergeableProp<DeferProp<Collection<PostsTransformer, 1, 'toObject'>>>>
+      paginated: OnceProp<MergeableProp<DeferProp<Paginator<PostsTransformer, 1, 'toObject'>>>>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts?: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        metadata: any
+      }
+    }>()
+  })
 })

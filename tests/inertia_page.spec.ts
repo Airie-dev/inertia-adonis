@@ -10,7 +10,7 @@
 import { test } from '@japa/runner'
 import { BaseTransformer } from '@adonisjs/core/transformers'
 
-import { always, deepMerge, defer, merge, optional } from '../src/props.ts'
+import { always, deepMerge, defer, merge, optional, once } from '../src/props.ts'
 import { InertiaFactory } from '../factories/inertia_factory.ts'
 
 test.group('Inertia.page', () => {
@@ -52,6 +52,7 @@ test.group('Inertia.page', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -122,6 +123,7 @@ test.group('Inertia.page', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "user": {
             "id": 1,
@@ -172,6 +174,7 @@ test.group('Inertia.page', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -226,6 +229,7 @@ test.group('Inertia.page', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "posts": [
             {
@@ -286,6 +290,7 @@ test.group('Inertia.page', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "posts": [
             {
@@ -343,6 +348,7 @@ test.group('Inertia.page', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -399,6 +405,7 @@ test.group('Inertia.page', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "posts": [
             {
@@ -456,6 +463,7 @@ test.group('Inertia.page', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -513,6 +521,7 @@ test.group('Inertia.page', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -583,6 +592,7 @@ test.group('Inertia.page', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -652,6 +662,7 @@ test.group('Inertia.page', () => {
           "posts",
           "paginated",
         ],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -722,6 +733,7 @@ test.group('Inertia.page', () => {
         "mergeProps": [
           "posts",
         ],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -792,6 +804,7 @@ test.group('Inertia.page', () => {
         "mergeProps": [
           "paginated",
         ],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -852,6 +865,7 @@ test.group('Inertia.page', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -920,6 +934,7 @@ test.group('Inertia.page', () => {
           "posts",
           "paginated",
         ],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -994,6 +1009,7 @@ test.group('Inertia.page', () => {
         "mergeProps": [
           "paginated",
         ],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -1064,6 +1080,7 @@ test.group('Inertia.page | Transformers', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -1147,6 +1164,7 @@ test.group('Inertia.page | Transformers', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "user": {
             "id": 1,
@@ -1208,6 +1226,7 @@ test.group('Inertia.page | Transformers', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -1270,6 +1289,7 @@ test.group('Inertia.page | Transformers', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "posts": [
             {
@@ -1342,6 +1362,7 @@ test.group('Inertia.page | Transformers', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "posts": [
             {
@@ -1409,6 +1430,7 @@ test.group('Inertia.page | Transformers', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -1478,6 +1500,7 @@ test.group('Inertia.page | Transformers', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "posts": [
             {
@@ -1547,6 +1570,7 @@ test.group('Inertia.page | Transformers', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -1624,6 +1648,7 @@ test.group('Inertia.page | Transformers', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -1713,6 +1738,7 @@ test.group('Inertia.page | Transformers', () => {
         "encryptHistory": false,
         "flash": {},
         "mergeProps": [],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -1803,6 +1829,7 @@ test.group('Inertia.page | Transformers', () => {
           "posts",
           "paginated",
         ],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -1892,6 +1919,7 @@ test.group('Inertia.page | Transformers', () => {
         "mergeProps": [
           "paginated",
         ],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -1977,6 +2005,7 @@ test.group('Inertia.page | Transformers', () => {
           "posts",
           "paginated",
         ],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -2066,6 +2095,7 @@ test.group('Inertia.page | Transformers', () => {
         "mergeProps": [
           "paginated",
         ],
+        "onceProps": {},
         "props": {
           "paginated": {
             "data": [
@@ -2083,5 +2113,668 @@ test.group('Inertia.page | Transformers', () => {
         "version": "1",
       }
     `)
+  })
+})
+
+test.group('Inertia.page | Once Props', () => {
+  test('build page with once prop', async ({ assert }) => {
+    type Props = {
+      user: { id: number }
+      plans?: { id: number; name: string }[]
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      user: { id: 1 },
+      plans: once(() => [{ id: 1, name: 'Basic' }]),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "onceProps": {
+          "plans": {
+            "expiresAt": null,
+            "prop": "plans",
+          },
+        },
+        "props": {
+          "plans": [
+            {
+              "id": 1,
+              "name": "Basic",
+            },
+          ],
+          "user": {
+            "id": 1,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('once prop is skipped when client already has it cached', async ({ assert }) => {
+    type Props = {
+      user: { id: number }
+      plans?: { id: number; name: string }[]
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .withCachedOnceProps(['plans'])
+      .create()
+
+    const page = await inertia.page('home', {
+      user: { id: 1 },
+      plans: once(() => [{ id: 1, name: 'Basic' }]),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "onceProps": {
+          "plans": {
+            "expiresAt": null,
+            "prop": "plans",
+          },
+        },
+        "props": {
+          "user": {
+            "id": 1,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('once prop with fresh option is always included even when cached', async ({ assert }) => {
+    type Props = {
+      user: { id: number }
+      plans?: { id: number; name: string }[]
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .withCachedOnceProps(['plans'])
+      .create()
+
+    const page = await inertia.page('home', {
+      user: { id: 1 },
+      plans: once(() => [{ id: 1, name: 'Basic' }], { fresh: true }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "onceProps": {
+          "plans": {
+            "expiresAt": null,
+            "prop": "plans",
+          },
+        },
+        "props": {
+          "plans": [
+            {
+              "id": 1,
+              "name": "Basic",
+            },
+          ],
+          "user": {
+            "id": 1,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('once prop with custom key via as option', async ({ assert }) => {
+    type Props = {
+      user: { id: number }
+      memberRoles?: { id: number; name: string }[]
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      user: { id: 1 },
+      memberRoles: once(() => [{ id: 1, name: 'Admin' }], { as: 'roles' }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "onceProps": {
+          "roles": {
+            "expiresAt": null,
+            "prop": "memberRoles",
+          },
+        },
+        "props": {
+          "memberRoles": [
+            {
+              "id": 1,
+              "name": "Admin",
+            },
+          ],
+          "user": {
+            "id": 1,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('once prop with custom key is cached using that key', async ({ assert }) => {
+    type Props = {
+      user: { id: number }
+      memberRoles?: { id: number; name: string }[]
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .withCachedOnceProps(['roles'])
+      .create()
+
+    const page = await inertia.page('home', {
+      user: { id: 1 },
+      memberRoles: once(() => [{ id: 1, name: 'Admin' }], { as: 'roles' }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "onceProps": {
+          "roles": {
+            "expiresAt": null,
+            "prop": "memberRoles",
+          },
+        },
+        "props": {
+          "user": {
+            "id": 1,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('once prop is computed during partial reload when explicitly requested', async ({
+    assert,
+  }) => {
+    type Props = {
+      user: { id: number }
+      plans?: { id: number; name: string }[]
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .partialReload('home')
+      .only(['plans'])
+      .create()
+
+    const page = await inertia.page('home', {
+      user: { id: 1 },
+      plans: once(() => [{ id: 1, name: 'Basic' }]),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "onceProps": {
+          "plans": {
+            "expiresAt": null,
+            "prop": "plans",
+          },
+        },
+        "props": {
+          "plans": [
+            {
+              "id": 1,
+              "name": "Basic",
+            },
+          ],
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('multiple once props', async ({ assert }) => {
+    type Props = {
+      plans?: { id: number }[]
+      countries?: { code: string }[]
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      plans: once(() => [{ id: 1 }]),
+      countries: once(() => [{ code: 'US' }], { as: 'countryList' }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "onceProps": {
+          "countryList": {
+            "expiresAt": null,
+            "prop": "countries",
+          },
+          "plans": {
+            "expiresAt": null,
+            "prop": "plans",
+          },
+        },
+        "props": {
+          "countries": [
+            {
+              "code": "US",
+            },
+          ],
+          "plans": [
+            {
+              "id": 1,
+            },
+          ],
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('once prop with expiration via until option', async ({ assert }) => {
+    type Props = {
+      rates?: { currency: string }[]
+    }
+
+    const expiresAt = new Date('2025-01-02T12:00:00.000Z') // Fixed date for snapshot
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      rates: once(() => [{ currency: 'USD' }], { until: expiresAt }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "onceProps": {
+          "rates": {
+            "expiresAt": 1735819200000,
+            "prop": "rates",
+          },
+        },
+        "props": {
+          "rates": [
+            {
+              "currency": "USD",
+            },
+          ],
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('defer().once() creates a once prop from deferred computation', async ({ assert }) => {
+    type Props = {
+      stats?: { count: number }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      stats: defer(() => ({ count: 42 })).once(),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {
+          "default": [
+            "stats",
+          ],
+        },
+        "encryptHistory": false,
+        "mergeProps": [],
+        "onceProps": {
+          "stats": {
+            "expiresAt": null,
+            "prop": "stats",
+          },
+        },
+        "props": {},
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('optional().once() creates a once prop from optional computation', async ({ assert }) => {
+    type Props = {
+      logs?: string[]
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      logs: optional(() => ['log1', 'log2']).once(),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "onceProps": {
+          "logs": {
+            "expiresAt": null,
+            "prop": "logs",
+          },
+        },
+        "props": {},
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('merge().once() creates a once prop from mergeable value', async ({ assert }) => {
+    type Props = {
+      items?: { id: number }[]
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      items: merge([{ id: 1 }]).once(),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [
+          "items",
+        ],
+        "onceProps": {
+          "items": {
+            "expiresAt": null,
+            "prop": "items",
+          },
+        },
+        "props": {
+          "items": [
+            {
+              "id": 1,
+            },
+          ],
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('deepMerge().once() creates a once prop from deep mergeable value', async ({ assert }) => {
+    type Props = {
+      settings?: { theme: string; notifications: { email: boolean } }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      settings: deepMerge({ theme: 'dark', notifications: { email: true } }).once(),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [
+          "settings",
+        ],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "onceProps": {
+          "settings": {
+            "expiresAt": null,
+            "prop": "settings",
+          },
+        },
+        "props": {
+          "settings": {
+            "notifications": {
+              "email": true,
+            },
+            "theme": "dark",
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('defer().merge().once() creates a deferred mergeable once prop', async ({ assert }) => {
+    type Props = {
+      activity?: { id: number; action: string }[]
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      activity: defer(() => [{ id: 1, action: 'login' }])
+        .merge()
+        .once(),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {
+          "default": [
+            "activity",
+          ],
+        },
+        "encryptHistory": false,
+        "mergeProps": [
+          "activity",
+        ],
+        "onceProps": {
+          "activity": {
+            "expiresAt": null,
+            "prop": "activity",
+          },
+        },
+        "props": {},
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('once prop with until option using duration string', async ({ assert }) => {
+    type Props = {
+      cache?: string[]
+    }
+
+    // Mock Date.now to get predictable expiresAt value
+    const originalNow = Date.now
+    const fixedTime = 1735700000000 // Fixed timestamp for testing
+    Date.now = () => fixedTime
+
+    try {
+      const inertia = new InertiaFactory<{
+        home: Props
+      }>().create()
+
+      const page = await inertia.page('home', {
+        cache: once(() => ['cached-data'], { until: '1h' }),
+      })
+
+      // 1 hour = 3600000 milliseconds
+      assert.snapshot(page).matchInline(`
+        {
+          "clearHistory": false,
+          "component": "home",
+          "deepMergeProps": [],
+          "deferredProps": {},
+          "encryptHistory": false,
+          "mergeProps": [],
+          "onceProps": {
+            "cache": {
+              "expiresAt": 1735703600000,
+              "prop": "cache",
+            },
+          },
+          "props": {
+            "cache": [
+              "cached-data",
+            ],
+          },
+          "url": "",
+          "version": "1",
+        }
+      `)
+    } finally {
+      Date.now = originalNow
+    }
+  })
+
+  test('once prop with until option using seconds as number', async ({ assert }) => {
+    type Props = {
+      rates?: { currency: string }[]
+    }
+
+    // Mock Date.now to get predictable expiresAt value
+    const originalNow = Date.now
+    const fixedTime = 1735700000000 // Fixed timestamp for testing
+    Date.now = () => fixedTime
+
+    try {
+      const inertia = new InertiaFactory<{
+        home: Props
+      }>().create()
+
+      const page = await inertia.page('home', {
+        rates: once(() => [{ currency: 'USD' }], { until: 3600 }), // 3600 seconds = 1 hour
+      })
+
+      assert.snapshot(page).matchInline(`
+        {
+          "clearHistory": false,
+          "component": "home",
+          "deepMergeProps": [],
+          "deferredProps": {},
+          "encryptHistory": false,
+          "mergeProps": [],
+          "onceProps": {
+            "rates": {
+              "expiresAt": 1735703600000,
+              "prop": "rates",
+            },
+          },
+          "props": {
+            "rates": [
+              {
+                "currency": "USD",
+              },
+            ],
+          },
+          "url": "",
+          "version": "1",
+        }
+      `)
+    } finally {
+      Date.now = originalNow
+    }
   })
 })

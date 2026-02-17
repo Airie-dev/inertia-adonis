@@ -10,10 +10,20 @@
 import { BaseSerializer } from '@adonisjs/core/transformers'
 import { type AsyncOrSync } from '@adonisjs/core/types/common'
 import { type JSONDataTypes } from '@adonisjs/core/types/transformers'
+import string from '@adonisjs/core/helpers/string'
 
-import { ALWAYS_PROP, DEEP_MERGE, DEFERRED_PROP, OPTIONAL_PROP, TO_BE_MERGED } from './symbols.ts'
+import {
+  ALWAYS_PROP,
+  DEEP_MERGE,
+  DEFERRED_PROP,
+  ONCE_PROP,
+  OPTIONAL_PROP,
+  TO_BE_MERGED,
+} from './symbols.ts'
 import {
   type DeferProp,
+  type OnceProp,
+  type OncePropOptions,
   type PageProps,
   type AlwaysProp,
   type OptionalProp,
@@ -75,6 +85,9 @@ export function defer<T extends UnPackedPageProps>(
     merge() {
       return merge(this)
     },
+    once(options?: OncePropOptions) {
+      return once(this, options)
+    },
     [DEFERRED_PROP]: true,
   }
 }
@@ -108,6 +121,9 @@ export function optional<T extends UnPackedPageProps>(fn: () => AsyncOrSync<T>):
   return {
     compute: fn,
     [OPTIONAL_PROP]: true,
+    once(options?: OncePropOptions) {
+      return once(this, options)
+    },
   }
 }
 
@@ -173,6 +189,9 @@ export function merge<T extends UnPackedPageProps | DeferProp<UnPackedPageProps>
     value,
     [TO_BE_MERGED]: true,
     [DEEP_MERGE]: false,
+    once(options?: OncePropOptions) {
+      return once(this, options)
+    },
   }
 }
 
@@ -212,6 +231,77 @@ export function deepMerge<T extends UnPackedPageProps | DeferProp<UnPackedPagePr
     value,
     [TO_BE_MERGED]: true,
     [DEEP_MERGE]: true,
+    once(options?: OncePropOptions) {
+      return once(this, options)
+    },
+  }
+}
+
+/**
+ * Creates a once prop that is remembered by the client and reused on subsequent
+ * pages. Once the client receives this prop, subsequent requests will exclude it
+ * unless explicitly requested or refreshed.
+ *
+ * Once props are ideal for data that rarely changes, is expensive to compute,
+ * or is simply large. They reduce server load by caching on the client side.
+ *
+ * @param value - Function or wrapped prop (DeferProp, OptionalProp, MergeableProp) that computes the prop value
+ * @param options - Optional configuration for the once prop
+ * @returns A once prop object
+ *
+ * @example
+ * ```javascript
+ * // Basic usage - prop is cached after first load
+ * const plans = once(() => Plan.all())
+ *
+ * // With expiration - prop refreshes after 1 day
+ * const rates = once(() => ExchangeRate.all(), { until: '1d' })
+ *
+ * // With custom key - share data across pages with different prop names
+ * const memberRoles = once(() => Role.all(), { as: 'roles' })
+ * const availableRoles = once(() => Role.all(), { as: 'roles' }) // Uses same cached data
+ *
+ * // Force refresh - always resolve even if client has cached
+ * const plans = once(() => Plan.all(), { fresh: true })
+ *
+ * // Combined options
+ * const data = once(() => getData(), { as: 'shared', until: '1h', fresh: true })
+ * ```
+ */
+export function once<
+  T extends
+    | UnPackedPageProps
+    | DeferProp<UnPackedPageProps>
+    | OptionalProp<UnPackedPageProps>
+    | MergeableProp<UnPackedPageProps | DeferProp<UnPackedPageProps>>,
+>(value: T | (() => AsyncOrSync<T>), options?: OncePropOptions): OnceProp<T> {
+  const computeFn =
+    value && isObject(value) && (isDeferredProp(value) || isOptionalProp(value))
+      ? (value as DeferProp<any> | OptionalProp<any>).compute
+      : typeof value === 'function'
+        ? (value as () => AsyncOrSync<any>)
+        : () => value
+
+  let expiresAt: number | null = null
+  if (options?.until) {
+    const delay = options.until
+    if (delay instanceof Date) {
+      expiresAt = delay.getTime()
+    } else if (typeof delay === 'string') {
+      const durationMs = string.milliseconds.parse(delay)
+      expiresAt = Date.now() + durationMs
+    } else {
+      expiresAt = Date.now() + delay * 1000
+    }
+  }
+
+  return {
+    value: value as T,
+    compute: computeFn,
+    shouldBeRefreshed: options?.fresh ?? false,
+    customKey: options?.as ?? null,
+    expiresAt,
+    [ONCE_PROP]: true,
   }
 }
 
@@ -316,6 +406,35 @@ export function isOptionalProp<T extends UnPackedPageProps>(
 }
 
 /**
+ * Type guard that checks if a prop value is a once prop.
+ *
+ * Once props contain the ONCE_PROP symbol and are cached by the client
+ * to be reused on subsequent pages.
+ *
+ * @param propValue - The object to check for once prop characteristics
+ * @returns True if the prop value is a once prop
+ *
+ * @example
+ * ```js
+ * const prop = once(() => ({ data: 'expensive computation' }))
+ *
+ * if (isOnceProp(prop)) {
+ *   // prop is now typed as OnceProp<T>
+ *   const result = prop.compute()
+ * }
+ * ```
+ */
+export function isOnceProp<
+  T extends
+    | UnPackedPageProps
+    | DeferProp<UnPackedPageProps>
+    | OptionalProp<UnPackedPageProps>
+    | MergeableProp<UnPackedPageProps | DeferProp<UnPackedPageProps>>,
+>(propValue: unknown): propValue is OnceProp<T> {
+  return isObject(propValue) && ONCE_PROP in propValue
+}
+
+/**
  * Helper function to unpack prop values using the transformer serialize function.
  *
  * @param value - The prop value to serialize
@@ -335,32 +454,37 @@ async function unpackPropValue(
  * This function processes page props and categorizes them based on their type:
  * - Deferred props: Skipped but communicated to client
  * - Optional props: Skipped entirely
+ * - Once props: Skipped if client already has them (unless refreshed)
  * - Always props: Always included
  * - Mergeable props: Included and marked for merging
  * - Regular props: Included normally
  *
  * @param pageProps - The page props to process
  * @param containerResolver - Container resolver for dependency injection
- * @returns Promise resolving to object containing processed props, deferred props list, and merge props list
+ * @param exceptOnceProps - Props that the client already has cached (from header)
+ * @returns Promise resolving to object containing processed props, deferred props list, merge props list, and once props metadata
  *
  * @example
  * ```js
  * const result = await buildStandardVisitProps({
  *   user: { name: 'John' },
  *   posts: defer(() => getPosts()),
- *   settings: merge({ theme: 'dark' })
- * })
- * // Returns: { props: { user: {...} }, deferredProps: { default: ['posts'] }, mergeProps: ['settings'] }
+ *   settings: merge({ theme: 'dark' }),
+ *   plans: once(() => Plan.all())
+ * }, containerResolver, [])
+ * // Returns: { props: { user: {...}, plans: [...] }, deferredProps: { default: ['posts'] }, mergeProps: ['settings'], onceProps: { plans: { prop: 'plans', expiresAt: null } } }
  * ```
  */
 export async function buildStandardVisitProps(
   pageProps: PageProps,
-  containerResolver: ContainerResolver<any>
+  containerResolver: ContainerResolver<any>,
+  exceptOnceProps: string[] = []
 ) {
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
   const newProps: ComponentProps = {}
   const deferredProps: { [group: string]: string[] } = {}
+  const onceProps: { [key: string]: { prop: string; expiresAt: number | null } } = {}
   const unpackedValues: Array<{
     key: string
     value: UnPackedPageProps | (() => AsyncOrSync<UnPackedPageProps>)
@@ -382,6 +506,87 @@ export async function buildStandardVisitProps(
        * Optional props are skipped during the standard visits
        */
       if (isOptionalProp(value)) {
+        continue
+      }
+
+      /**
+       * Once props can be standalone or wrap other prop types (defer, optional, merge).
+       * Handle each case appropriately to preserve the wrapped prop's behavior.
+       */
+      if (isOnceProp(value)) {
+        const onceKey = value.customKey ?? key
+
+        if (isObject(value.value) && isDeferredProp(value.value)) {
+          deferredProps[value.value.group] = deferredProps[value.value.group] ?? []
+          deferredProps[value.value.group].push(key)
+
+          onceProps[onceKey] = {
+            prop: key,
+            expiresAt: value.expiresAt,
+          }
+
+          continue
+        }
+
+        if (isObject(value.value) && isOptionalProp(value.value)) {
+          onceProps[onceKey] = {
+            prop: key,
+            expiresAt: value.expiresAt,
+          }
+
+          continue
+        }
+
+        if (isObject(value.value) && isMergeableProp(value.value)) {
+          if (value.value[DEEP_MERGE]) {
+            deepMergeProps.push(key)
+          } else {
+            mergeProps.push(key)
+          }
+
+          onceProps[onceKey] = {
+            prop: key,
+            expiresAt: value.expiresAt,
+          }
+
+          /**
+           * If the merged value is deferred, we need to add it to the deferred props
+           * list. This must happen BEFORE the cache check so the client knows about
+           * deferred props even when they're once-cached.
+           */
+          const innerValue = value.value.value
+          const innerValueIsDeferred = isObject(innerValue) && isDeferredProp(innerValue)
+          if (innerValueIsDeferred) {
+            deferredProps[innerValue.group] = deferredProps[innerValue.group] ?? []
+            deferredProps[innerValue.group].push(key)
+          }
+
+          /**
+           * Skip computing the value if client already has it cached (once behavior)
+           * or if it's a deferred prop (deferred props aren't computed on standard visits)
+           */
+          if (exceptOnceProps.includes(onceKey) && !value.shouldBeRefreshed) {
+            continue
+          }
+
+          if (innerValueIsDeferred) {
+            continue
+          }
+
+          unpackedValues.push({ key, value: innerValue })
+          continue
+        }
+
+        onceProps[onceKey] = {
+          prop: key,
+          expiresAt: value.expiresAt,
+        }
+
+        if (exceptOnceProps.includes(onceKey) && !value.shouldBeRefreshed) {
+          continue
+        }
+
+        unpackedValues.push({ key, value: value.compute })
         continue
       }
 
@@ -469,6 +674,7 @@ export async function buildStandardVisitProps(
     mergeProps,
     deepMergeProps,
     deferredProps,
+    onceProps,
   }
 }
 
@@ -504,6 +710,7 @@ export async function buildPartialRequestProps(
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
   const newProps: ComponentProps = {}
+  const onceProps: { [key: string]: { prop: string; expiresAt: number | null } } = {}
   const unpackedValues: Array<{
     key: string
     value: UnPackedPageProps | (() => AsyncOrSync<UnPackedPageProps>)
@@ -539,6 +746,21 @@ export async function buildPartialRequestProps(
        * Unpack optional prop
        */
       if (isOptionalProp(value)) {
+        unpackedValues.push({ key, value: value.compute })
+        continue
+      }
+
+      /**
+       * Once props are always resolved when explicitly requested.
+       * Partial reloads bypass the cache check. We include onceProps
+       * metadata so the client knows to remember this prop.
+       */
+      if (isOnceProp(value)) {
+        const onceKey = value.customKey ?? key
+        onceProps[onceKey] = {
+          prop: key,
+          expiresAt: value.expiresAt,
+        }
         unpackedValues.push({ key, value: value.compute })
         continue
       }
@@ -610,5 +832,6 @@ export async function buildPartialRequestProps(
     mergeProps,
     deepMergeProps,
     deferredProps: {},
+    onceProps,
   }
 }
