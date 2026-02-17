@@ -2139,6 +2139,7 @@ test.group('Inertia.page | Once Props', () => {
         "deepMergeProps": [],
         "deferredProps": {},
         "encryptHistory": false,
+        "flash": {},
         "mergeProps": [],
         "onceProps": {
           "plans": {
@@ -2187,6 +2188,7 @@ test.group('Inertia.page | Once Props', () => {
         "deepMergeProps": [],
         "deferredProps": {},
         "encryptHistory": false,
+        "flash": {},
         "mergeProps": [],
         "onceProps": {
           "plans": {
@@ -2229,6 +2231,7 @@ test.group('Inertia.page | Once Props', () => {
         "deepMergeProps": [],
         "deferredProps": {},
         "encryptHistory": false,
+        "flash": {},
         "mergeProps": [],
         "onceProps": {
           "plans": {
@@ -2275,6 +2278,7 @@ test.group('Inertia.page | Once Props', () => {
         "deepMergeProps": [],
         "deferredProps": {},
         "encryptHistory": false,
+        "flash": {},
         "mergeProps": [],
         "onceProps": {
           "roles": {
@@ -2323,6 +2327,7 @@ test.group('Inertia.page | Once Props', () => {
         "deepMergeProps": [],
         "deferredProps": {},
         "encryptHistory": false,
+        "flash": {},
         "mergeProps": [],
         "onceProps": {
           "roles": {
@@ -2368,6 +2373,7 @@ test.group('Inertia.page | Once Props', () => {
         "deepMergeProps": [],
         "deferredProps": {},
         "encryptHistory": false,
+        "flash": {},
         "mergeProps": [],
         "onceProps": {
           "plans": {
@@ -2411,6 +2417,7 @@ test.group('Inertia.page | Once Props', () => {
         "deepMergeProps": [],
         "deferredProps": {},
         "encryptHistory": false,
+        "flash": {},
         "mergeProps": [],
         "onceProps": {
           "countryList": {
@@ -2462,6 +2469,7 @@ test.group('Inertia.page | Once Props', () => {
         "deepMergeProps": [],
         "deferredProps": {},
         "encryptHistory": false,
+        "flash": {},
         "mergeProps": [],
         "onceProps": {
           "rates": {
@@ -2506,6 +2514,7 @@ test.group('Inertia.page | Once Props', () => {
           ],
         },
         "encryptHistory": false,
+        "flash": {},
         "mergeProps": [],
         "onceProps": {
           "stats": {
@@ -2540,6 +2549,7 @@ test.group('Inertia.page | Once Props', () => {
         "deepMergeProps": [],
         "deferredProps": {},
         "encryptHistory": false,
+        "flash": {},
         "mergeProps": [],
         "onceProps": {
           "logs": {
@@ -2574,6 +2584,7 @@ test.group('Inertia.page | Once Props', () => {
         "deepMergeProps": [],
         "deferredProps": {},
         "encryptHistory": false,
+        "flash": {},
         "mergeProps": [
           "items",
         ],
@@ -2618,6 +2629,7 @@ test.group('Inertia.page | Once Props', () => {
         ],
         "deferredProps": {},
         "encryptHistory": false,
+        "flash": {},
         "mergeProps": [],
         "onceProps": {
           "settings": {
@@ -2665,6 +2677,7 @@ test.group('Inertia.page | Once Props', () => {
           ],
         },
         "encryptHistory": false,
+        "flash": {},
         "mergeProps": [
           "activity",
         ],
@@ -2708,6 +2721,7 @@ test.group('Inertia.page | Once Props', () => {
           "deepMergeProps": [],
           "deferredProps": {},
           "encryptHistory": false,
+          "flash": {},
           "mergeProps": [],
           "onceProps": {
             "cache": {
@@ -2755,6 +2769,7 @@ test.group('Inertia.page | Once Props', () => {
           "deepMergeProps": [],
           "deferredProps": {},
           "encryptHistory": false,
+          "flash": {},
           "mergeProps": [],
           "onceProps": {
             "rates": {
