@@ -75,13 +75,20 @@ export class Inertia<Pages> {
    * ```
    */
   getFlashed(): Record<string, AllowedSessionValues> {
-    const flash = this.ctx.session?.flashMessages.get('inertia.flash_data', {})
+    const fromSession = this.ctx.session?.flashMessages.get('inertia.flash_data', {})
+    const fromResponse = this.ctx.session?.responseFlashMessages.get('inertia.flash_data', {})
 
-    if (!flash || typeof flash !== 'object' || Array.isArray(flash)) {
-      return {}
-    }
+    const sessionFlash =
+      fromSession && typeof fromSession === 'object' && !Array.isArray(fromSession)
+        ? fromSession
+        : {}
 
-    return flash
+    const responseFlash =
+      fromResponse && typeof fromResponse === 'object' && !Array.isArray(fromResponse)
+        ? fromResponse
+        : {}
+
+    return { ...sessionFlash, ...responseFlash }
   }
 
   #sharedStateProviders?: (PageProps | (() => AsyncOrSync<PageProps>))[]
@@ -524,7 +531,7 @@ export class Inertia<Pages> {
       flashData = { ...existingFlash, ...keyOrData }
     }
 
-    this.ctx.session.flashMessages.set('inertia.flash_data', flashData)
+    this.ctx.session.flash('inertia.flash_data', flashData)
     return this
   }
 
