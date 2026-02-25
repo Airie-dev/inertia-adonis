@@ -7,11 +7,21 @@
  * file that was distributed with this source code.
  */
 
-import { encode } from 'html-entities'
 import type { PluginFn } from 'edge.js/types'
 
 import debug from '../../debug.js'
 import { inertiaHeadTag, inertiaTag } from './tags.js'
+
+/**
+ * Escape JSON for safe embedding inside a <script> tag.
+ *
+ * We replace HTML special characters with their Unicode escape sequences.
+ * This prevents the browser from interpreting "</script>" as a closing tag,
+ * while keeping the JSON valid and parseable on the client side.
+ */
+function escapeJsonForScriptTag(json: string): string {
+  return json.replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026')
+}
 
 /**
  * Edge.js plugin that registers Inertia.js tags and global functions
@@ -48,7 +58,8 @@ export const edgePluginInertia: () => PluginFn<undefined> = () => {
     debug('sharing globals and inertia tags with edge')
 
     /**
-     * Register the `inertia` global used by the `@inertia` tag
+     * Register the `inertia` global used by the `@inertia` tag.
+     * Outputs a script tag with the page JSON (for getInitialPageFromDOM) and a root element for mounting.
      */
     edge.global(
       'inertia',
@@ -57,12 +68,12 @@ export const edgePluginInertia: () => PluginFn<undefined> = () => {
           return page.ssrBody
         }
 
+        const id = attributes?.id ?? 'app'
         const className = attributes?.class ? ` class="${attributes.class}"` : ''
-        const id = attributes?.id ? ` id="${attributes.id}"` : ' id="app"'
         const tag = attributes?.as || 'div'
-        const dataPage = encode(JSON.stringify(page))
+        const pageJson = escapeJsonForScriptTag(JSON.stringify(page))
 
-        return `<${tag}${id}${className} data-page="${dataPage}"></${tag}>`
+        return `<script data-page="${id}" type="application/json">${pageJson}</script><${tag} id="${id}"${className}></${tag}>`
       }
     )
 

@@ -13,7 +13,7 @@ import { test } from '@japa/runner'
 import { edgePluginInertia } from '../../src/plugins/edge/plugin.js'
 
 test.group('Edge plugin', () => {
-  test('generate root div with data-page attribute', async ({ assert }) => {
+  test('generate script with page JSON and root div for mounting', async ({ assert }) => {
     const edge = Edge.create().use(edgePluginInertia())
     edge.registerTemplate('components/layout', {
       template: `@inertia()`,
@@ -22,10 +22,12 @@ test.group('Edge plugin', () => {
       template: `@!component('components/layout', { page })`,
     })
     const html = await edge.render('root_template', { page: {} })
-    assert.deepEqual(html.split('\n'), ['<div id="app" data-page="{}"></div>'])
+    assert.deepEqual(html.split('\n'), [
+      '<script data-page="app" type="application/json">{}</script><div id="app"></div>',
+    ])
   })
 
-  test('@inertia generate a root dive with data-page filled and encoded', async ({ assert }) => {
+  test('@inertia generate script with page JSON and root div', async ({ assert }) => {
     const edge = Edge.create().use(edgePluginInertia())
     edge.registerTemplate('components/layout', {
       template: `@inertia()`,
@@ -39,7 +41,7 @@ test.group('Edge plugin', () => {
     })
 
     assert.deepEqual(html.split('\n'), [
-      '<div id="app" data-page="{&quot;foo&quot;:&quot;bar&quot;}"></div>',
+      '<script data-page="app" type="application/json">{"foo":"bar"}</script><div id="app"></div>',
     ])
   })
 
@@ -56,7 +58,9 @@ test.group('Edge plugin', () => {
       page: {},
     })
 
-    assert.deepEqual(html.split('\n'), ['<div id="app" class="foo" data-page="{}"></div>'])
+    assert.deepEqual(html.split('\n'), [
+      '<script data-page="app" type="application/json">{}</script><div id="app" class="foo"></div>',
+    ])
   })
 
   test('render root div as another tag', async ({ assert }) => {
@@ -66,7 +70,36 @@ test.group('Edge plugin', () => {
       page: {},
     })
 
-    assert.deepEqual(html.split('\n'), ['<main id="app" data-page="{}"></main>'])
+    assert.deepEqual(html.split('\n'), [
+      '<script data-page="app" type="application/json">{}</script><main id="app"></main>',
+    ])
+  })
+
+  test('escape HTML special characters in JSON content', async ({ assert }) => {
+    const edge = Edge.create().use(edgePluginInertia())
+    const page = {
+      content: '<section><p>builder</p></section></script><div id="preview">x</div>',
+    }
+
+    const html = await edge.renderRaw(`@inertia()`, { page })
+    // Unicode escapes prevent HTML tag interpretation while keeping JSON valid
+    assert.include(html, '\\u003c')
+    assert.include(html, '\\u003e')
+  })
+
+  test('escape all HTML-like content including opening tags and entities', async ({ assert }) => {
+    const edge = Edge.create().use(edgePluginInertia())
+    const page = {
+      html: '<script>alert("xss")</script>',
+      entity: 'Tom & Jerry',
+      tags: '<div><span>nested</span></div>',
+    }
+
+    const html = await edge.renderRaw(`@inertia()`, { page })
+    // Verify Unicode escapes are applied (prevents any HTML interpretation)
+    assert.include(html, '\\u003c')
+    assert.include(html, '\\u003e')
+    assert.include(html, '\\u0026')
   })
 
   test('render SSR body when exists', async ({ assert }) => {

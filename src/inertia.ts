@@ -13,6 +13,7 @@
 import { createHash } from 'node:crypto'
 import { type Vite } from '@adonisjs/vite'
 import type { HttpContext } from '@adonisjs/core/http'
+import type { AllowedSessionValues } from '@adonisjs/session/types'
 
 import { InertiaHeaders } from './headers.js'
 import { type ServerRenderer } from './server_renderer.js'
@@ -30,6 +31,7 @@ import {
   merge,
   always,
   optional,
+  once,
   deepMerge,
   buildStandardVisitProps,
   buildPartialRequestProps,
@@ -58,6 +60,37 @@ import { type AsyncOrSync } from '@poppinss/utils/types'
  * ```
  */
 export class Inertia<Pages> {
+  /**
+   * Retrieve the flashed data from the session.
+   *
+   * Returns all flash data that has been set for the current/next request.
+   *
+   * @returns Record of flash data, or empty object if no flash data exists
+   *
+   * @example
+   * ```js
+   * inertia.flash('success', 'Saved')
+   * const flashed = inertia.getFlashed()
+   * // Returns: { success: 'Saved' }
+   * ```
+   */
+  getFlashed(): Record<string, AllowedSessionValues> {
+    const fromSession = this.ctx.session?.flashMessages.get('inertia.flash_data', {})
+    const fromResponse = this.ctx.session?.responseFlashMessages.get('inertia.flash_data', {})
+
+    const sessionFlash =
+      fromSession && typeof fromSession === 'object' && !Array.isArray(fromSession)
+        ? fromSession
+        : {}
+
+    const responseFlash =
+      fromResponse && typeof fromResponse === 'object' && !Array.isArray(fromResponse)
+        ? fromResponse
+        : {}
+
+    return { ...sessionFlash, ...responseFlash }
+  }
+
   #sharedStateProviders?: (PageProps | (() => AsyncOrSync<PageProps>))[]
   #cachedRequestInfo?: RequestInfo
 
@@ -145,6 +178,23 @@ export class Inertia<Pages> {
    * ```
    */
   deepMerge = deepMerge
+
+  /**
+   * Create a once prop that is cached by the client and reused on subsequent pages
+   *
+   * @example
+   * ```js
+   * {
+   *   // Basic usage - cached after first load
+   *   plans: inertia.once(() => Plan.all()),
+   *   // With expiration
+   *   rates: inertia.once(() => Rate.all(), { until: '1d' }),
+   *   // With custom key for sharing across pages
+   *   roles: inertia.once(() => Role.all(), { as: 'roles' })
+   * }
+   * ```
+   */
+  once = once
 
   /**
    * Creates a new Inertia instance
@@ -258,7 +308,11 @@ export class Inertia<Pages> {
     }
 
     debug('building props for a standard visit %O', requestInfo)
-    return buildStandardVisitProps(finalProps, this.ctx.containerResolver)
+    return buildStandardVisitProps(
+      finalProps,
+      this.ctx.containerResolver,
+      requestInfo.exceptOnceProps ?? []
+    )
   }
 
   /**
@@ -350,6 +404,7 @@ export class Inertia<Pages> {
       exceptProps: this.ctx.request.header(InertiaHeaders.PartialExcept)?.split(','),
       resetProps: this.ctx.request.header(InertiaHeaders.Reset)?.split(','),
       errorBag: this.ctx.request.header(InertiaHeaders.ErrorBag),
+      exceptOnceProps: this.ctx.request.header(InertiaHeaders.ExceptOnceProps)?.split(','),
     }
 
     return this.#cachedRequestInfo
@@ -443,6 +498,44 @@ export class Inertia<Pages> {
   }
 
   /**
+   * Flash data to be included with the current/next Inertia response.
+   *
+   * Flash data is merged under the `inertia.flash_data` session key.
+   * When no session middleware is active, this method becomes a no-op.
+   *
+   * @example
+   * ```js
+   * // Flash a single key-value pair
+   * inertia.flash('success', 'Saved successfully')
+   *
+   * // Flash multiple key-value pairs at once
+   * inertia.flash({ success: 'Saved', banner: { title: 'Done' } })
+   * ```
+   */
+  flash(key: string, data: AllowedSessionValues): this
+  flash(data: Record<string, AllowedSessionValues>): this
+  flash(
+    keyOrData: string | Record<string, AllowedSessionValues>,
+    data?: AllowedSessionValues
+  ): this {
+    if (!this.ctx.session) {
+      return this
+    }
+
+    const existingFlash = this.getFlashed()
+    let flashData: Record<string, AllowedSessionValues>
+
+    if (typeof keyOrData === 'string') {
+      flashData = { ...existingFlash, [keyOrData]: data! }
+    } else {
+      flashData = { ...existingFlash, ...keyOrData }
+    }
+
+    this.ctx.session.flash('inertia.flash_data', flashData)
+    return this
+  }
+
+  /**
    * Build a page object with processed props and metadata
    *
    * Creates the complete page object that will be sent to the client or used for SSR.
@@ -466,11 +559,8 @@ export class Inertia<Pages> {
       : never
   ): Promise<PageObject<Pages[Page]>> {
     const requestInfo = this.requestInfo()
-    const { props, mergeProps, deferredProps, deepMergeProps } = await this.#buildPageProps(
-      page,
-      requestInfo,
-      pageProps
-    )
+    const { props, mergeProps, deferredProps, deepMergeProps, onceProps } =
+      await this.#buildPageProps(page, requestInfo, pageProps)
 
     return {
       component: page,
@@ -478,10 +568,12 @@ export class Inertia<Pages> {
       version: this.getVersion(),
       clearHistory: this.#shouldClearHistory,
       encryptHistory: this.#shouldEncryptHistory,
+      flash: this.getFlashed(),
       props: props as Pages[Page],
       deferredProps,
       mergeProps,
       deepMergeProps,
+      onceProps: onceProps ?? {},
     } satisfies PageObject<Pages[Page]>
   }
 

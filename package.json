@@ -147,8 +147,9 @@
     "Harminder Virk <virk@adonisjs.com>"
   ],
   "publishConfig": {
+    "registry": "https://npm.dev.airie.io",
     "access": "public",
-    "provenance": true
+    "provenance": false
   },
   "release-it": {
     "git": {
