@@ -11,7 +11,7 @@ import { test } from '@japa/runner'
 import { BaseTransformer } from '@adonisjs/core/transformers'
 
 import { type AsPageProps } from '../../src/types.ts'
-import { always, defer, merge, optional } from '../../src/props.ts'
+import { always, defer, merge, optional, scroll } from '../../src/props.ts'
 
 function createRenderer<Input extends Record<string, any>>() {
   return function render<T extends AsPageProps<Input>>(_: T): void {}
@@ -294,6 +294,24 @@ test.group('To page props', () => {
           total: 10,
         }
       }).merge(),
+    })
+  })
+
+  test('allow defining optional props via scroll helper', () => {
+    type Props = {
+      posts?: {
+        data: { id: number; title: string }[]
+      }
+    }
+
+    const render = createRenderer<Props>()
+    render({
+      posts: scroll(() => ({ data: [{ id: 1, title: 'Hello world' }] }), {
+        pageName: 'page',
+        previousPage: null,
+        nextPage: 2,
+        currentPage: 1,
+      }),
     })
   })
 

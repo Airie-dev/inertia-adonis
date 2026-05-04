@@ -81,4 +81,9 @@ export const InertiaHeaders = {
    * that it has already received and cached.
    */
   ExceptOnceProps: 'x-inertia-except-once-props',
+
+  /**
+   * Header sent by the InfiniteScroll component to indicate whether new data should be appended or prepended.
+   */
+  InfiniteScrollMergeIntent: 'x-inertia-infinite-scroll-merge-intent',
 } as const

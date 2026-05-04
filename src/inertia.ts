@@ -33,6 +33,7 @@ import {
   optional,
   once,
   deepMerge,
+  scroll,
   buildStandardVisitProps,
   buildPartialRequestProps,
 } from './props.ts'
@@ -180,6 +181,11 @@ export class Inertia<Pages> {
   deepMerge = deepMerge
 
   /**
+   * Create an infinite scroll prop with pagination metadata.
+   */
+  scroll = scroll
+
+  /**
    * Create a once prop that is cached by the client and reused on subsequent pages
    *
    * @example
@@ -304,14 +310,22 @@ export class Inertia<Pages> {
       debug('building props for a partial reload %O', requestInfo)
       debug('cherry picking props %s', cherryPickProps)
 
-      return buildPartialRequestProps(finalProps, cherryPickProps, this.ctx.containerResolver)
+      return buildPartialRequestProps(
+        finalProps,
+        cherryPickProps,
+        this.ctx.containerResolver,
+        requestInfo.resetProps ?? [],
+        this.ctx.request.header(InertiaHeaders.InfiniteScrollMergeIntent)
+      )
     }
 
     debug('building props for a standard visit %O', requestInfo)
     return buildStandardVisitProps(
       finalProps,
       this.ctx.containerResolver,
-      requestInfo.exceptOnceProps ?? []
+      requestInfo.exceptOnceProps ?? [],
+      requestInfo.resetProps ?? [],
+      this.ctx.request.header(InertiaHeaders.InfiniteScrollMergeIntent)
     )
   }
 
@@ -559,8 +573,15 @@ export class Inertia<Pages> {
       : never
   ): Promise<PageObject<Pages[Page]>> {
     const requestInfo = this.requestInfo()
-    const { props, mergeProps, deferredProps, deepMergeProps, onceProps } =
-      await this.#buildPageProps(page, requestInfo, pageProps)
+    const {
+      props,
+      mergeProps,
+      deferredProps,
+      deepMergeProps,
+      prependProps,
+      onceProps,
+      scrollProps,
+    } = await this.#buildPageProps(page, requestInfo, pageProps)
 
     return {
       component: page,
@@ -573,7 +594,9 @@ export class Inertia<Pages> {
       deferredProps,
       mergeProps,
       deepMergeProps,
+      ...(prependProps && prependProps.length ? { prependProps } : {}),
       onceProps: onceProps ?? {},
+      ...(scrollProps && Object.keys(scrollProps).length ? { scrollProps } : {}),
     } satisfies PageObject<Pages[Page]>
   }
 

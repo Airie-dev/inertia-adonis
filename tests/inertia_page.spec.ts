@@ -10,10 +10,65 @@
 import { test } from '@japa/runner'
 import { BaseTransformer } from '@adonisjs/core/transformers'
 
-import { always, deepMerge, defer, merge, optional, once } from '../src/props.ts'
+import { always, deepMerge, defer, merge, optional, once, scroll } from '../src/props.ts'
 import { InertiaFactory } from '../factories/inertia_factory.ts'
 
 test.group('Inertia.page', () => {
+  test('build page with scroll prop metadata', async ({ assert }) => {
+    type Props = {
+      posts?: {
+        data: { id: number; title: string }[]
+      }
+    }
+
+    const inertia = new InertiaFactory<{ home: Props }>().create()
+
+    const page = await inertia.page('home', {
+      posts: scroll(() => ({ data: [{ id: 1, title: 'Hello world' }] }), {
+        pageName: 'page',
+        previousPage: null,
+        nextPage: 2,
+        currentPage: 1,
+      }),
+    })
+
+    assert.deepEqual(page.deferredProps, { default: ['posts'] })
+    assert.deepEqual(page.mergeProps, ['posts.data'])
+    assert.deepEqual(page.props, {})
+    assert.deepEqual(page.scrollProps, {
+      posts: { pageName: 'page', previousPage: null, nextPage: 2, currentPage: 1, reset: false },
+    })
+  })
+
+  test('resolve scroll prop during partial reload and support reset metadata', async ({
+    assert,
+  }) => {
+    type Props = {
+      posts?: {
+        data: { id: number; title: string }[]
+      }
+    }
+
+    const inertia = new InertiaFactory<{ home: Props }>()
+      .partialReload('home')
+      .only(['posts'])
+      .reset(['posts'])
+      .create()
+
+    const page = await inertia.page('home', {
+      posts: scroll(
+        () => ({ data: [{ id: 2, title: 'Second' }] }),
+        () => ({ pageName: 'page', previousPage: 1, nextPage: 3, currentPage: 2 })
+      ),
+    })
+
+    assert.deepEqual(page.props, { posts: { data: [{ id: 2, title: 'Second' }] } })
+    assert.deepEqual(page.mergeProps, [])
+    assert.deepEqual(page.scrollProps, {
+      posts: { pageName: 'page', previousPage: 1, nextPage: 3, currentPage: 2, reset: true },
+    })
+  })
+
   test('build page with component props as it is', async ({ assert }) => {
     type Props = {
       user: {

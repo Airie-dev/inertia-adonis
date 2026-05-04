@@ -43,3 +43,8 @@ export const DEEP_MERGE = Symbol.for('DEEP_MERGE')
  * for data that rarely changes or is expensive to compute.
  */
 export const ONCE_PROP = Symbol.for('ONCE_PROP')
+
+/**
+ * Symbol used to mark props that provide infinite scroll metadata.
+ */
+export const SCROLL_PROP = Symbol.for('SCROLL_PROP')

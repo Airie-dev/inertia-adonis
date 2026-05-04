@@ -18,6 +18,7 @@ import {
   DEFERRED_PROP,
   ONCE_PROP,
   OPTIONAL_PROP,
+  SCROLL_PROP,
   TO_BE_MERGED,
 } from './symbols.ts'
 import {
@@ -30,6 +31,9 @@ import {
   type MergeableProp,
   type ComponentProps,
   type UnPackedPageProps,
+  type ScrollProp,
+  type ScrollMetadata,
+  type ProvidesScrollMetadata,
 } from './types.ts'
 import { type ContainerResolver } from '@adonisjs/core/container'
 
@@ -237,6 +241,30 @@ export function deepMerge<T extends UnPackedPageProps | DeferProp<UnPackedPagePr
   }
 }
 
+export function scroll<T extends UnPackedPageProps>(
+  value: T | (() => AsyncOrSync<T>),
+  metadata: ProvidesScrollMetadata,
+  wrapper = 'data'
+): ScrollProp<T> {
+  return {
+    value,
+    wrapper,
+    metadata,
+    group: 'default',
+    compute: typeof value === 'function' ? (value as () => AsyncOrSync<T>) : () => value,
+    merge() {
+      return merge(this)
+    },
+    once(options?: OncePropOptions) {
+      return once(this, options)
+    },
+    [DEFERRED_PROP]: true,
+    [TO_BE_MERGED]: true,
+    [DEEP_MERGE]: false,
+    [SCROLL_PROP]: true,
+  }
+}
+
 /**
  * Creates a once prop that is remembered by the client and reused on subsequent
  * pages. Once the client receives this prop, subsequent requests will exclude it
@@ -424,6 +452,16 @@ export function isOptionalProp<T extends UnPackedPageProps>(
  * }
  * ```
  */
+export function isScrollProp<T extends UnPackedPageProps>(
+  propValue: unknown
+): propValue is ScrollProp<T> {
+  return isObject(propValue) && SCROLL_PROP in propValue
+}
+
+async function resolveScrollMetadata(metadata: ProvidesScrollMetadata): Promise<ScrollMetadata> {
+  return typeof metadata === 'function' ? metadata() : metadata
+}
+
 export function isOnceProp<
   T extends
     | UnPackedPageProps
@@ -478,13 +516,17 @@ async function unpackPropValue(
 export async function buildStandardVisitProps(
   pageProps: PageProps,
   containerResolver: ContainerResolver<any>,
-  exceptOnceProps: string[] = []
+  exceptOnceProps: string[] = [],
+  resetProps: string[] = [],
+  infiniteScrollMergeIntent?: string
 ) {
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
+  const prependProps: string[] = []
   const newProps: ComponentProps = {}
   const deferredProps: { [group: string]: string[] } = {}
   const onceProps: { [key: string]: { prop: string; expiresAt: number | null } } = {}
+  const scrollProps: { [key: string]: ScrollMetadata & { reset: boolean } } = {}
   const unpackedValues: Array<{
     key: string
     value: UnPackedPageProps | (() => AsyncOrSync<UnPackedPageProps>)
@@ -492,6 +534,23 @@ export async function buildStandardVisitProps(
 
   for (const [key, value] of Object.entries(pageProps)) {
     if (isObject(value)) {
+      if (isScrollProp(value)) {
+        deferredProps[value.group] = deferredProps[value.group] ?? []
+        deferredProps[value.group].push(key)
+        if (!resetProps.includes(key)) {
+          if (infiniteScrollMergeIntent === 'prepend') {
+            prependProps.push(`${key}.${value.wrapper}`)
+          } else {
+            mergeProps.push(`${key}.${value.wrapper}`)
+          }
+        }
+        scrollProps[key] = {
+          ...(await resolveScrollMetadata(value.metadata)),
+          reset: resetProps.includes(key),
+        }
+        continue
+      }
+
       /**
        * Deferred props are skipped during the standard visits.
        * But we inform the client about it
@@ -673,8 +732,10 @@ export async function buildStandardVisitProps(
     props: newProps,
     mergeProps,
     deepMergeProps,
+    prependProps,
     deferredProps,
     onceProps,
+    scrollProps,
   }
 }
 
@@ -705,12 +766,16 @@ export async function buildStandardVisitProps(
 export async function buildPartialRequestProps(
   pageProps: PageProps,
   cherryPickProps: string[],
-  containerResolver: ContainerResolver<any>
+  containerResolver: ContainerResolver<any>,
+  resetProps: string[] = [],
+  infiniteScrollMergeIntent?: string
 ) {
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
+  const prependProps: string[] = []
   const newProps: ComponentProps = {}
   const onceProps: { [key: string]: { prop: string; expiresAt: number | null } } = {}
+  const scrollProps: { [key: string]: ScrollMetadata & { reset: boolean } } = {}
   const unpackedValues: Array<{
     key: string
     value: UnPackedPageProps | (() => AsyncOrSync<UnPackedPageProps>)
@@ -731,6 +796,22 @@ export async function buildPartialRequestProps(
        * Skip key if not part of cherry picking list
        */
       if (!cherryPickProps.includes(key)) {
+        continue
+      }
+
+      if (isScrollProp(value)) {
+        if (!resetProps.includes(key)) {
+          if (infiniteScrollMergeIntent === 'prepend') {
+            prependProps.push(`${key}.${value.wrapper}`)
+          } else {
+            mergeProps.push(`${key}.${value.wrapper}`)
+          }
+        }
+        scrollProps[key] = {
+          ...(await resolveScrollMetadata(value.metadata)),
+          reset: resetProps.includes(key),
+        }
+        unpackedValues.push({ key, value: value.compute })
         continue
       }
 
@@ -831,7 +912,9 @@ export async function buildPartialRequestProps(
     props: newProps,
     mergeProps,
     deepMergeProps,
+    prependProps,
     deferredProps: {},
     onceProps,
+    scrollProps,
   }
 }

@@ -18,6 +18,7 @@ import {
   type TO_BE_MERGED,
   type DEFERRED_PROP,
   type ONCE_PROP,
+  type SCROLL_PROP,
 } from './symbols.ts'
 
 /**
@@ -130,6 +131,29 @@ export type MergeableProp<T extends UnPackedPageProps | DeferProp<UnPackedPagePr
   once(options?: OncePropOptions): OnceProp<MergeableProp<T>>
 }
 
+export type ScrollMetadata = {
+  pageName: string
+  previousPage: string | number | null
+  nextPage: string | number | null
+  currentPage: string | number | null
+}
+
+export type ProvidesScrollMetadata = ScrollMetadata | (() => AsyncOrSync<ScrollMetadata>)
+
+export type ScrollProp<T extends UnPackedPageProps> = {
+  value: T | (() => AsyncOrSync<T>)
+  wrapper: string
+  metadata: ProvidesScrollMetadata
+  group: string
+  compute: () => AsyncOrSync<T>
+  merge(): MergeableProp<ScrollProp<T>>
+  once(options?: OncePropOptions): OnceProp<ScrollProp<T>>
+  [DEFERRED_PROP]: true
+  [TO_BE_MERGED]: true
+  [DEEP_MERGE]: false
+  [SCROLL_PROP]: true
+}
+
 /**
  * Options for configuring a once prop
  */
@@ -222,6 +246,7 @@ type PagePropsLazyDataTypes<T extends JSONDataTypes> =
    * - Can be dropped during cherry-picking
    */
   | OnceProp<MergeableProp<DeferProp<T | ResolvableOf<T>>>>
+  | ScrollProp<T | ResolvableOf<T>>
 
 /**
  * Eager props are always included during standard Inertia visits, but
@@ -547,6 +572,12 @@ export type PageObject<Props> = {
    * existing props on the page
    */
   deepMergeProps?: string[]
+
+  prependProps?: string[]
+
+  scrollProps?: {
+    [key: string]: ScrollMetadata & { reset: boolean }
+  }
 
   /**
    * Once props metadata - maps custom keys to their prop name and expiration.

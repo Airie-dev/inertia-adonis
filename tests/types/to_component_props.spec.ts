@@ -22,6 +22,7 @@ import {
   type OptionalProp,
   type MergeableProp,
   type ToComponentProps,
+  type ScrollProp,
 } from '../../src/types.ts'
 
 test.group('To component props', () => {
@@ -304,6 +305,22 @@ test.group('To component props', () => {
             metadata: any
           }
         | undefined
+    }>()
+  })
+})
+
+test.group('To component props | Scroll', () => {
+  test('convert scroll page props to optional component props', ({ expectTypeOf }) => {
+    type Data = ToComponentProps<{
+      posts: ScrollProp<{
+        data: { id: number; title: string }[]
+      }>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      posts?: {
+        data: { id: number; title: string }[]
+      }
     }>()
   })
 })
