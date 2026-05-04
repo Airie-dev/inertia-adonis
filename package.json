@@ -1,7 +1,7 @@
 {
   "name": "@adonisjs/inertia",
   "description": "Official Inertia.js adapter for AdonisJS",
-  "version": "4.2.1",
+  "version": "4.2.2",
   "engines": {
     "node": ">=24.0.0"
   },
@@ -53,8 +53,8 @@
     "@adonisjs/session": "^8.0.0",
     "@adonisjs/tsconfig": "^2.0.0",
     "@adonisjs/vite": "^5.1.0",
-    "@inertiajs/react": "^2.3.16",
-    "@inertiajs/vue3": "^2.3.16",
+    "@inertiajs/react": "^3.0.3",
+    "@inertiajs/vue3": "^3.0.3",
     "@japa/api-client": "^3.2.1",
     "@japa/assert": "4.2.0",
     "@japa/expect-type": "^2.0.4",
@@ -94,8 +94,8 @@
     "@adonisjs/core": "^7.0.0-next.23 || ^7.0.0",
     "@adonisjs/session": "^8.0.0-next.2 || ^8.0.0",
     "@adonisjs/vite": "^5.1.0-next.2 || ^5.1.0",
-    "@inertiajs/react": "^2.3.8",
-    "@inertiajs/vue3": "^2.3.8",
+    "@inertiajs/react": "^3.0.0",
+    "@inertiajs/vue3": "^3.0.0",
     "@japa/api-client": "^3.1.1",
     "@japa/plugin-adonisjs": "^5.1.0-next.1 || ^5.1.0",
     "@tuyau/core": "^1.0.0-beta.10 || ^1.0.0",
