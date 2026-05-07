@@ -32,12 +32,35 @@ test.group('Inertia.page', () => {
       }),
     })
 
-    assert.deepEqual(page.deferredProps, { default: ['posts'] })
+    assert.deepEqual(page.deferredProps, {})
     assert.deepEqual(page.mergeProps, ['posts.data'])
-    assert.deepEqual(page.props, {})
+    assert.deepEqual(page.props, { posts: { data: [{ id: 1, title: 'Hello world' }] } })
     assert.deepEqual(page.scrollProps, {
       posts: { pageName: 'page', previousPage: null, nextPage: 2, currentPage: 1, reset: false },
     })
+  })
+
+  test('build page with deferred scroll prop when explicitly deferred', async ({ assert }) => {
+    type Props = {
+      posts?: {
+        data: { id: number; title: string }[]
+      }
+    }
+
+    const inertia = new InertiaFactory<{ home: Props }>().create()
+
+    const page = await inertia.page('home', {
+      posts: scroll(() => ({ data: [{ id: 1, title: 'Hello world' }] }), {
+        pageName: 'page',
+        previousPage: null,
+        nextPage: 2,
+        currentPage: 1,
+      }).defer(),
+    })
+
+    assert.deepEqual(page.deferredProps, { default: ['posts'] })
+    assert.deepEqual(page.props, {})
+    assert.isUndefined(page.scrollProps)
   })
 
   test('resolve scroll prop during partial reload and support reset metadata', async ({

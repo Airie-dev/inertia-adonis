@@ -186,9 +186,9 @@ export function always<T extends UnPackedPageProps>(value: T): AlwaysProp<T> {
  * })
  * ```
  */
-export function merge<T extends UnPackedPageProps | DeferProp<UnPackedPageProps>>(
-  value: T
-): MergeableProp<T> {
+export function merge<
+  T extends UnPackedPageProps | DeferProp<UnPackedPageProps> | ScrollProp<UnPackedPageProps>,
+>(value: T): MergeableProp<T> {
   return {
     value,
     [TO_BE_MERGED]: true,
@@ -228,9 +228,9 @@ export function merge<T extends UnPackedPageProps | DeferProp<UnPackedPageProps>
  * })
  * ```
  */
-export function deepMerge<T extends UnPackedPageProps | DeferProp<UnPackedPageProps>>(
-  value: T
-): MergeableProp<T> {
+export function deepMerge<
+  T extends UnPackedPageProps | DeferProp<UnPackedPageProps> | ScrollProp<UnPackedPageProps>,
+>(value: T): MergeableProp<T> {
   return {
     value,
     [TO_BE_MERGED]: true,
@@ -252,13 +252,17 @@ export function scroll<T extends UnPackedPageProps>(
     metadata,
     group: 'default',
     compute: typeof value === 'function' ? (value as () => AsyncOrSync<T>) : () => value,
+    defer(group = 'default') {
+      this.group = group
+      this[DEFERRED_PROP] = true
+      return this as ScrollProp<T> & DeferProp<T>
+    },
     merge() {
       return merge(this)
     },
     once(options?: OncePropOptions) {
       return once(this, options)
     },
-    [DEFERRED_PROP]: true,
     [TO_BE_MERGED]: true,
     [DEEP_MERGE]: false,
     [SCROLL_PROP]: true,
@@ -301,11 +305,16 @@ export function once<
     | UnPackedPageProps
     | DeferProp<UnPackedPageProps>
     | OptionalProp<UnPackedPageProps>
-    | MergeableProp<UnPackedPageProps | DeferProp<UnPackedPageProps>>,
+    | ScrollProp<UnPackedPageProps>
+    | MergeableProp<
+        UnPackedPageProps | DeferProp<UnPackedPageProps> | ScrollProp<UnPackedPageProps>
+      >,
 >(value: T | (() => AsyncOrSync<T>), options?: OncePropOptions): OnceProp<T> {
   const computeFn =
-    value && isObject(value) && (isDeferredProp(value) || isOptionalProp(value))
-      ? (value as DeferProp<any> | OptionalProp<any>).compute
+    value &&
+    isObject(value) &&
+    (isDeferredProp(value) || isOptionalProp(value) || isScrollProp(value))
+      ? (value as DeferProp<any> | OptionalProp<any> | ScrollProp<any>).compute
       : typeof value === 'function'
         ? (value as () => AsyncOrSync<any>)
         : () => value
@@ -535,8 +544,12 @@ export async function buildStandardVisitProps(
   for (const [key, value] of Object.entries(pageProps)) {
     if (isObject(value)) {
       if (isScrollProp(value)) {
-        deferredProps[value.group] = deferredProps[value.group] ?? []
-        deferredProps[value.group].push(key)
+        if (isDeferredProp(value)) {
+          deferredProps[value.group] = deferredProps[value.group] ?? []
+          deferredProps[value.group].push(key)
+          continue
+        }
+
         if (!resetProps.includes(key)) {
           if (infiniteScrollMergeIntent === 'prepend') {
             prependProps.push(`${key}.${value.wrapper}`)
@@ -548,6 +561,7 @@ export async function buildStandardVisitProps(
           ...(await resolveScrollMetadata(value.metadata)),
           reset: resetProps.includes(key),
         }
+        unpackedValues.push({ key, value: value.compute })
         continue
       }
 
@@ -632,6 +646,11 @@ export async function buildStandardVisitProps(
             continue
           }
 
+          if (isObject(innerValue) && isScrollProp(innerValue)) {
+            unpackedValues.push({ key, value: innerValue.compute })
+            continue
+          }
+
           unpackedValues.push({ key, value: innerValue })
           continue
         }
@@ -694,7 +713,7 @@ export async function buildStandardVisitProps(
        */
       unpackedValues.push({
         key,
-        value: value,
+        value: value as UnPackedPageProps,
       })
     } else {
       /**

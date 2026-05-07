@@ -121,7 +121,9 @@ export type DeferProp<T extends UnPackedPageProps> = {
  *
  * @template T - The type of the prop value to be merged
  */
-export type MergeableProp<T extends UnPackedPageProps | DeferProp<UnPackedPageProps>> = {
+export type MergeableProp<
+  T extends UnPackedPageProps | DeferProp<UnPackedPageProps> | ScrollProp<UnPackedPageProps>,
+> = {
   /** The prop value to be merged */
   value: T
   /** Brand symbol to identify this prop for merging */
@@ -146,9 +148,10 @@ export type ScrollProp<T extends UnPackedPageProps> = {
   metadata: ProvidesScrollMetadata
   group: string
   compute: () => AsyncOrSync<T>
+  defer(group?: string): ScrollProp<T> & DeferProp<T>
   merge(): MergeableProp<ScrollProp<T>>
   once(options?: OncePropOptions): OnceProp<ScrollProp<T>>
-  [DEFERRED_PROP]: true
+  [DEFERRED_PROP]?: true
   [TO_BE_MERGED]: true
   [DEEP_MERGE]: false
   [SCROLL_PROP]: true
@@ -177,13 +180,16 @@ export type OnceProp<
     | UnPackedPageProps
     | DeferProp<UnPackedPageProps>
     | OptionalProp<UnPackedPageProps>
-    | MergeableProp<UnPackedPageProps | DeferProp<UnPackedPageProps>>,
+    | ScrollProp<UnPackedPageProps>
+    | MergeableProp<
+        UnPackedPageProps | DeferProp<UnPackedPageProps> | ScrollProp<UnPackedPageProps>
+      >,
 > = {
   /** The prop value that will be cached by the client */
   value: T
   /** Function that computes the prop value */
   compute: () => AsyncOrSync<
-    T extends DeferProp<infer U> | OptionalProp<infer U>
+    T extends DeferProp<infer U> | OptionalProp<infer U> | ScrollProp<infer U>
       ? U
       : T extends UnPackedPageProps
         ? T
@@ -246,7 +252,6 @@ type PagePropsLazyDataTypes<T extends JSONDataTypes> =
    * - Can be dropped during cherry-picking
    */
   | OnceProp<MergeableProp<DeferProp<T | ResolvableOf<T>>>>
-  | ScrollProp<T | ResolvableOf<T>>
 
 /**
  * Eager props are always included during standard Inertia visits, but
@@ -294,6 +299,13 @@ type PagePropsEagerDataTypes<T extends JSONDataTypes> =
    */
   | OnceProp<MergeableProp<T | ResolvableOf<T>>>
 
+  /**
+   * - Included on standard visit
+   * - Merged with existing client-side data on pagination reloads
+   * - Can be explicitly deferred by calling .defer()
+   */
+  | ScrollProp<T | ResolvableOf<T>>
+
 /**
  * Following is the list of acceptable Page props data types
  * Combines both eager and lazy prop data types for comprehensive prop handling
@@ -310,7 +322,8 @@ export type PagePropsDataTypes<T extends JSONDataTypes = JSONDataTypes> =
  */
 export type PageProps = Record<
   string,
-  PagePropsDataTypes | MergeableProp<UnPackedPageProps | DeferProp<UnPackedPageProps>>
+  | PagePropsDataTypes
+  | MergeableProp<UnPackedPageProps | DeferProp<UnPackedPageProps> | ScrollProp<UnPackedPageProps>>
 >
 
 /**
@@ -390,11 +403,13 @@ export type GetRequiredPropValue<Value> =
           ? UnpackProp<BMD>
           : UnpackProp<BM>
         : UnpackProp<B>
-      : Value extends MergeableProp<infer C>
+      : Value extends ScrollProp<infer C>
         ? UnpackProp<C>
-        : Value extends () => AsyncOrSync<infer D>
-          ? UnpackProp<D>
-          : UnpackProp<Value>
+        : Value extends MergeableProp<infer C>
+          ? UnpackProp<C>
+          : Value extends () => AsyncOrSync<infer D>
+            ? UnpackProp<D>
+            : UnpackProp<Value>
 
 /**
  * Utility type to simplify value of an optional prop by unwrapping branded types
@@ -413,15 +428,19 @@ export type GetOptionalPropValue<Value> =
             ? UnpackProp<BMA>
             : UnpackProp<BM>
           : UnpackProp<B>
-      : Value extends MergeableProp<infer C>
-        ? C extends DeferProp<infer CA>
-          ? UnpackProp<CA>
-          : UnpackProp<C>
-        : Value extends OptionalProp<infer D>
-          ? UnpackProp<D>
-          : Value extends () => AsyncOrSync<infer E>
-            ? UnpackProp<E>
-            : UnpackProp<Value>
+      : Value extends ScrollProp<infer C>
+        ? UnpackProp<C>
+        : Value extends MergeableProp<infer C>
+          ? C extends DeferProp<infer CA>
+            ? UnpackProp<CA>
+            : C extends ScrollProp<infer CS>
+              ? UnpackProp<CS>
+              : UnpackProp<C>
+          : Value extends OptionalProp<infer D>
+            ? UnpackProp<D>
+            : Value extends () => AsyncOrSync<infer E>
+              ? UnpackProp<E>
+              : UnpackProp<Value>
 
 /**
  * Converts the Page props to Component props that will be available to the frontend

@@ -310,7 +310,7 @@ test.group('To component props', () => {
 })
 
 test.group('To component props | Scroll', () => {
-  test('convert scroll page props to optional component props', ({ expectTypeOf }) => {
+  test('convert scroll page props to component props', ({ expectTypeOf }) => {
     type Data = ToComponentProps<{
       posts: ScrollProp<{
         data: { id: number; title: string }[]
@@ -318,7 +318,7 @@ test.group('To component props | Scroll', () => {
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
-      posts?: {
+      posts: {
         data: { id: number; title: string }[]
       }
     }>()
