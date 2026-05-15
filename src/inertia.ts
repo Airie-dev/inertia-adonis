@@ -579,6 +579,7 @@ export class Inertia<Pages> {
       deferredProps,
       deepMergeProps,
       prependProps,
+      matchPropsOn,
       onceProps,
       scrollProps,
     } = await this.#buildPageProps(page, requestInfo, pageProps)
@@ -595,6 +596,7 @@ export class Inertia<Pages> {
       mergeProps,
       deepMergeProps,
       ...(prependProps && prependProps.length ? { prependProps } : {}),
+      ...(matchPropsOn && matchPropsOn.length ? { matchPropsOn } : {}),
       onceProps: onceProps ?? {},
       ...(scrollProps && Object.keys(scrollProps).length ? { scrollProps } : {}),
     } satisfies PageObject<Pages[Page]>

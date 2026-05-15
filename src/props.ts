@@ -33,7 +33,7 @@ import {
   type UnPackedPageProps,
   type ScrollProp,
   type ScrollMetadata,
-  type ProvidesScrollMetadata,
+  type ScrollValue,
 } from './types.ts'
 import { type ContainerResolver } from '@adonisjs/core/container'
 
@@ -242,23 +242,41 @@ export function deepMerge<
 }
 
 export function scroll<T extends UnPackedPageProps>(
-  value: T | (() => AsyncOrSync<T>),
-  metadata: ProvidesScrollMetadata,
-  wrapper = 'data'
+  value: ScrollValue<T> | (() => AsyncOrSync<ScrollValue<T>>)
 ): ScrollProp<T> {
   return {
     value,
-    wrapper,
-    metadata,
+    wrapper: 'data',
+    mergeStrategy: 'append',
+    matchOnPaths: [],
     group: 'default',
-    compute: typeof value === 'function' ? (value as () => AsyncOrSync<T>) : () => value,
+    compute:
+      typeof value === 'function' ? (value as () => AsyncOrSync<ScrollValue<T>>) : () => value,
     defer(group = 'default') {
       this.group = group
       this[DEFERRED_PROP] = true
       return this as ScrollProp<T> & DeferProp<T>
     },
+    append(matchOn?: string) {
+      this.mergeStrategy = 'append'
+      if (matchOn) {
+        this.matchOn(matchOn)
+      }
+      return this
+    },
+    prepend(matchOn?: string) {
+      this.mergeStrategy = 'prepend'
+      if (matchOn) {
+        this.matchOn(matchOn)
+      }
+      return this
+    },
+    matchOn(path: string) {
+      this.matchOnPaths.push(path)
+      return this
+    },
     merge() {
-      return merge(this)
+      return this
     },
     once(options?: OncePropOptions) {
       return once(this, options)
@@ -467,8 +485,38 @@ export function isScrollProp<T extends UnPackedPageProps>(
   return isObject(propValue) && SCROLL_PROP in propValue
 }
 
-async function resolveScrollMetadata(metadata: ProvidesScrollMetadata): Promise<ScrollMetadata> {
-  return typeof metadata === 'function' ? metadata() : metadata
+async function resolveScrollPropValue(
+  value: ScrollProp<UnPackedPageProps>,
+  containerResolver: ContainerResolver<any>
+): Promise<{ data: JSONDataTypes; metadata: ScrollMetadata }> {
+  const resolved = await value.compute()
+
+  return {
+    data: await unpackPropValue(resolved.data, containerResolver),
+    metadata: resolved.metadata,
+  }
+}
+
+function collectScrollMergeMetadata(
+  key: string,
+  value: ScrollProp<UnPackedPageProps>,
+  mergeProps: string[],
+  prependProps: string[],
+  matchPropsOn: string[],
+  resetProps: string[],
+  infiniteScrollMergeIntent?: string
+) {
+  if (!resetProps.includes(key)) {
+    if (infiniteScrollMergeIntent === 'prepend' || value.mergeStrategy === 'prepend') {
+      prependProps.push(`${key}.${value.wrapper}`)
+    } else {
+      mergeProps.push(`${key}.${value.wrapper}`)
+    }
+  }
+
+  for (const matchOnPath of value.matchOnPaths) {
+    matchPropsOn.push(`${key}.${value.wrapper}.${matchOnPath}`)
+  }
 }
 
 export function isOnceProp<
@@ -532,6 +580,7 @@ export async function buildStandardVisitProps(
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
   const prependProps: string[] = []
+  const matchPropsOn: string[] = []
   const newProps: ComponentProps = {}
   const deferredProps: { [group: string]: string[] } = {}
   const onceProps: { [key: string]: { prop: string; expiresAt: number | null } } = {}
@@ -550,18 +599,21 @@ export async function buildStandardVisitProps(
           continue
         }
 
-        if (!resetProps.includes(key)) {
-          if (infiniteScrollMergeIntent === 'prepend') {
-            prependProps.push(`${key}.${value.wrapper}`)
-          } else {
-            mergeProps.push(`${key}.${value.wrapper}`)
-          }
-        }
+        collectScrollMergeMetadata(
+          key,
+          value,
+          mergeProps,
+          prependProps,
+          matchPropsOn,
+          resetProps,
+          infiniteScrollMergeIntent
+        )
+        const resolvedScrollValue = await resolveScrollPropValue(value, containerResolver)
         scrollProps[key] = {
-          ...(await resolveScrollMetadata(value.metadata)),
+          ...resolvedScrollValue.metadata,
           reset: resetProps.includes(key),
         }
-        unpackedValues.push({ key, value: value.compute })
+        newProps[key] = { data: resolvedScrollValue.data }
         continue
       }
 
@@ -647,7 +699,8 @@ export async function buildStandardVisitProps(
           }
 
           if (isObject(innerValue) && isScrollProp(innerValue)) {
-            unpackedValues.push({ key, value: innerValue.compute })
+            const resolvedScrollValue = await resolveScrollPropValue(innerValue, containerResolver)
+            newProps[key] = { data: resolvedScrollValue.data }
             continue
           }
 
@@ -752,6 +805,7 @@ export async function buildStandardVisitProps(
     mergeProps,
     deepMergeProps,
     prependProps,
+    matchPropsOn,
     deferredProps,
     onceProps,
     scrollProps,
@@ -792,6 +846,7 @@ export async function buildPartialRequestProps(
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
   const prependProps: string[] = []
+  const matchPropsOn: string[] = []
   const newProps: ComponentProps = {}
   const onceProps: { [key: string]: { prop: string; expiresAt: number | null } } = {}
   const scrollProps: { [key: string]: ScrollMetadata & { reset: boolean } } = {}
@@ -819,18 +874,21 @@ export async function buildPartialRequestProps(
       }
 
       if (isScrollProp(value)) {
-        if (!resetProps.includes(key)) {
-          if (infiniteScrollMergeIntent === 'prepend') {
-            prependProps.push(`${key}.${value.wrapper}`)
-          } else {
-            mergeProps.push(`${key}.${value.wrapper}`)
-          }
-        }
+        collectScrollMergeMetadata(
+          key,
+          value,
+          mergeProps,
+          prependProps,
+          matchPropsOn,
+          resetProps,
+          infiniteScrollMergeIntent
+        )
+        const resolvedScrollValue = await resolveScrollPropValue(value, containerResolver)
         scrollProps[key] = {
-          ...(await resolveScrollMetadata(value.metadata)),
+          ...resolvedScrollValue.metadata,
           reset: resetProps.includes(key),
         }
-        unpackedValues.push({ key, value: value.compute })
+        newProps[key] = { data: resolvedScrollValue.data }
         continue
       }
 
@@ -932,6 +990,7 @@ export async function buildPartialRequestProps(
     mergeProps,
     deepMergeProps,
     prependProps,
+    matchPropsOn,
     deferredProps: {},
     onceProps,
     scrollProps,

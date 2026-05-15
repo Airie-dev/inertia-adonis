@@ -24,16 +24,54 @@ test.group('Inertia.page', () => {
     const inertia = new InertiaFactory<{ home: Props }>().create()
 
     const page = await inertia.page('home', {
-      posts: scroll(() => ({ data: [{ id: 1, title: 'Hello world' }] }), {
-        pageName: 'page',
-        previousPage: null,
-        nextPage: 2,
-        currentPage: 1,
-      }),
+      posts: scroll(() => ({
+        data: [{ id: 1, title: 'Hello world' }],
+        metadata: {
+          pageName: 'page',
+          previousPage: null,
+          nextPage: 2,
+          currentPage: 1,
+        },
+      })),
     })
 
     assert.deepEqual(page.deferredProps, {})
     assert.deepEqual(page.mergeProps, ['posts.data'])
+    assert.deepEqual(page.props, { posts: { data: [{ id: 1, title: 'Hello world' }] } })
+    assert.deepEqual(page.scrollProps, {
+      posts: { pageName: 'page', previousPage: null, nextPage: 2, currentPage: 1, reset: false },
+    })
+  })
+
+  test('build page with scroll prop using transformers and match metadata', async ({ assert }) => {
+    type Props = {
+      posts: {
+        data: { id: number; title: string }[]
+      }
+    }
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const inertia = new InertiaFactory<{ home: Props }>().create()
+
+    const page = await inertia.page('home', {
+      posts: scroll(() => ({
+        data: PostsTransformer.transform([{ id: 1, title: 'Hello world' }]),
+        metadata: {
+          pageName: 'page',
+          previousPage: null,
+          nextPage: 2,
+          currentPage: 1,
+        },
+      })).prepend('id'),
+    })
+
+    assert.deepEqual(page.prependProps, ['posts.data'])
+    assert.deepEqual(page.matchPropsOn, ['posts.data.id'])
     assert.deepEqual(page.props, { posts: { data: [{ id: 1, title: 'Hello world' }] } })
     assert.deepEqual(page.scrollProps, {
       posts: { pageName: 'page', previousPage: null, nextPage: 2, currentPage: 1, reset: false },
@@ -50,12 +88,15 @@ test.group('Inertia.page', () => {
     const inertia = new InertiaFactory<{ home: Props }>().create()
 
     const page = await inertia.page('home', {
-      posts: scroll(() => ({ data: [{ id: 1, title: 'Hello world' }] }), {
-        pageName: 'page',
-        previousPage: null,
-        nextPage: 2,
-        currentPage: 1,
-      }).defer(),
+      posts: scroll(() => ({
+        data: [{ id: 1, title: 'Hello world' }],
+        metadata: {
+          pageName: 'page',
+          previousPage: null,
+          nextPage: 2,
+          currentPage: 1,
+        },
+      })).defer(),
     })
 
     assert.deepEqual(page.deferredProps, { default: ['posts'] })
@@ -79,10 +120,10 @@ test.group('Inertia.page', () => {
       .create()
 
     const page = await inertia.page('home', {
-      posts: scroll(
-        () => ({ data: [{ id: 2, title: 'Second' }] }),
-        () => ({ pageName: 'page', previousPage: 1, nextPage: 3, currentPage: 2 })
-      ),
+      posts: scroll(() => ({
+        data: [{ id: 2, title: 'Second' }],
+        metadata: { pageName: 'page', previousPage: 1, nextPage: 3, currentPage: 2 },
+      })),
     })
 
     assert.deepEqual(page.props, { posts: { data: [{ id: 2, title: 'Second' }] } })

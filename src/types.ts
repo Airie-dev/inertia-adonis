@@ -140,16 +140,23 @@ export type ScrollMetadata = {
   currentPage: string | number | null
 }
 
-export type ProvidesScrollMetadata = ScrollMetadata | (() => AsyncOrSync<ScrollMetadata>)
+export type ScrollValue<T extends UnPackedPageProps> = {
+  data: T
+  metadata: ScrollMetadata
+}
 
 export type ScrollProp<T extends UnPackedPageProps> = {
-  value: T | (() => AsyncOrSync<T>)
-  wrapper: string
-  metadata: ProvidesScrollMetadata
+  value: ScrollValue<T> | (() => AsyncOrSync<ScrollValue<T>>)
+  wrapper: 'data'
+  mergeStrategy: 'append' | 'prepend'
+  matchOnPaths: string[]
   group: string
-  compute: () => AsyncOrSync<T>
+  compute: () => AsyncOrSync<ScrollValue<T>>
   defer(group?: string): ScrollProp<T> & DeferProp<T>
-  merge(): MergeableProp<ScrollProp<T>>
+  append(matchOn?: string): ScrollProp<T>
+  prepend(matchOn?: string): ScrollProp<T>
+  matchOn(path: string): ScrollProp<T>
+  merge(): ScrollProp<T>
   once(options?: OncePropOptions): OnceProp<ScrollProp<T>>
   [DEFERRED_PROP]?: true
   [TO_BE_MERGED]: true
@@ -404,7 +411,7 @@ export type GetRequiredPropValue<Value> =
           : UnpackProp<BM>
         : UnpackProp<B>
       : Value extends ScrollProp<infer C>
-        ? UnpackProp<C>
+        ? { data: UnpackProp<C> }
         : Value extends MergeableProp<infer C>
           ? UnpackProp<C>
           : Value extends () => AsyncOrSync<infer D>
@@ -429,12 +436,12 @@ export type GetOptionalPropValue<Value> =
             : UnpackProp<BM>
           : UnpackProp<B>
       : Value extends ScrollProp<infer C>
-        ? UnpackProp<C>
+        ? { data: UnpackProp<C> }
         : Value extends MergeableProp<infer C>
           ? C extends DeferProp<infer CA>
             ? UnpackProp<CA>
             : C extends ScrollProp<infer CS>
-              ? UnpackProp<CS>
+              ? { data: UnpackProp<CS> }
               : UnpackProp<C>
           : Value extends OptionalProp<infer D>
             ? UnpackProp<D>
@@ -470,10 +477,18 @@ export type AsPageProps<Props extends ComponentProps> = Prettify<
     }[keyof Props]]?:
       | PagePropsDataTypes<Props[K]>
       | MergeableProp<UnPackedPageProps<Props[K]> | DeferProp<UnPackedPageProps<Props[K]>>>
+      | (NonNullable<Props[K]> extends { data: infer D extends JSONDataTypes }
+          ? ScrollProp<D | ResolvableOf<D>>
+          : never)
   } & {
     [K in {
       [O in keyof Props]: [undefined] extends [Props[O]] ? never : O
-    }[keyof Props]]: PagePropsEagerDataTypes<Props[K]> | MergeableProp<UnPackedPageProps<Props[K]>>
+    }[keyof Props]]:
+      | PagePropsEagerDataTypes<Props[K]>
+      | MergeableProp<UnPackedPageProps<Props[K]>>
+      | (NonNullable<Props[K]> extends { data: infer D extends JSONDataTypes }
+          ? ScrollProp<D | ResolvableOf<D>>
+          : never)
   }
 >
 
@@ -593,6 +608,8 @@ export type PageObject<Props> = {
   deepMergeProps?: string[]
 
   prependProps?: string[]
+
+  matchPropsOn?: string[]
 
   scrollProps?: {
     [key: string]: ScrollMetadata & { reset: boolean }

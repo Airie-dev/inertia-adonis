@@ -312,9 +312,28 @@ test.group('To component props', () => {
 test.group('To component props | Scroll', () => {
   test('convert scroll page props to component props', ({ expectTypeOf }) => {
     type Data = ToComponentProps<{
-      posts: ScrollProp<{
+      posts: ScrollProp<{ id: number; title: string }[]>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      posts: {
         data: { id: number; title: string }[]
-      }>
+      }
+    }>()
+  })
+
+  test('convert scroll page props using transformers to component props', ({ expectTypeOf }) => {
+    class PostsTransformer extends BaseTransformer<any> {
+      toObject() {
+        return {
+          id: 1,
+          title: 'Hello world',
+        }
+      }
+    }
+
+    type Data = ToComponentProps<{
+      posts: ScrollProp<Collection<PostsTransformer, 1, 'toObject'>>
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{

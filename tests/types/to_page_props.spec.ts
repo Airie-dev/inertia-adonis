@@ -306,12 +306,15 @@ test.group('To page props', () => {
 
     const render = createRenderer<Props>()
     render({
-      posts: scroll(() => ({ data: [{ id: 1, title: 'Hello world' }] }), {
-        pageName: 'page',
-        previousPage: null,
-        nextPage: 2,
-        currentPage: 1,
-      }),
+      posts: scroll(() => ({
+        data: [{ id: 1, title: 'Hello world' }],
+        metadata: {
+          pageName: 'page',
+          previousPage: null,
+          nextPage: 2,
+          currentPage: 1,
+        },
+      })),
     })
   })
 

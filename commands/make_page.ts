@@ -84,10 +84,15 @@ export default class MakePage extends BaseCommand {
     const framework = await this.#resolveFramework()
     const codemods = await this.createCodemods()
 
+    const entity = this.app.generators.createEntity(this.name)
+    const extension = framework === 'vue' ? '.vue' : '.tsx'
+
     await codemods.makeUsingStub(stubsRoot, `make/page/${framework}.stub`, {
       flags: this.parsed.flags,
       pagesDir: this.pagesDir,
-      entity: this.app.generators.createEntity(this.name),
+      entity,
+      pageName: this.app.generators.modelName(entity.name),
+      pageFileName: `${this.app.generators.viewFileName(entity.name).replace(/\.edge$/, '')}${extension}`,
     })
   }
 }

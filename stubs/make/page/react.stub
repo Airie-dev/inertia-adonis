@@ -1,5 +1,3 @@
-{{#var pageName = generators.inertiaPageName(entity.name)}}
-{{#var pageFileName = generators.inertiaPageFileName(entity.name, '.tsx')}}
 {{{
   exports({
     to: app.makePath(pagesDir, entity.path, pageFileName)
