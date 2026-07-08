@@ -28,6 +28,7 @@ test.group('Inertia', () => {
     assert.isUndefined(ctx.response.getHeader(InertiaHeaders.Inertia))
     assert.equal(ctx.response.getStatus(), 409)
     assert.equal(ctx.response.getHeader(InertiaHeaders.Location), 'https://adonisjs.com')
+    assert.isUndefined(ctx.response.getHeader(InertiaHeaders.Version))
   })
 
   test('calling inertia.render should set the X-Inertia header', async ({ assert }) => {

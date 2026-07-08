@@ -187,6 +187,7 @@ export default abstract class BaseInertiaMiddleware {
       }
       ctx.response.removeHeader(InertiaHeaders.Inertia)
       ctx.response.header(InertiaHeaders.Location, ctx.request.url(true))
+      ctx.response.header(InertiaHeaders.Version, version)
       ctx.response.status(409)
     }
   }
